@@ -64,38 +64,50 @@ public class PagoController {
         }
     }
 
-    // Crea un nuevo pago
     @PostMapping
     public ResponseEntity<?> createPago(@Valid @RequestBody Pago pago, BindingResult result) {
-        // Valida los errores en los datos recibidos
+        // Validar los errores de entrada
         if (result.hasErrors()) {
             Map<String, String> errores = new HashMap<>();
             result.getFieldErrors().forEach(error -> {
                 errores.put(error.getField(), error.getDefaultMessage());
             });
-
-            // Retorna los errores de validación
             return ResponseEntity.badRequest().body(Map.of(
                     "success", false,
                     "errors", errores
             ));
         }
-
+    
         try {
-            // Intenta registrar el pago
+            // Verificar si el curso asociado existe
+            Long cursoId = pago.getId_curso();
+            String url = "http://localhost:8080/api/cursos/" + cursoId;
+    
+            RestTemplate restTemplate = new RestTemplate();
+            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+    
+            if (response.getBody() == null || response.getBody().isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of(
+                        "success", false,
+                        "message", "El curso con ID " + cursoId + " no existe"
+                ));
+            }
+    
+            // Si todo está correcto, crea el pago
             pagoService.createPago(pago);
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of(
                     "success", true,
                     "message", "Pago registrado correctamente"
             ));
+    
         } catch (Exception e) {
-            // Si ocurre un error, retorna un mensaje de error
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of(
                     "success", false,
                     "message", "Error al registrar el pago"
             ));
         }
     }
+
 
     // Elimina un pago por su ID
     @DeleteMapping("/{id}")
