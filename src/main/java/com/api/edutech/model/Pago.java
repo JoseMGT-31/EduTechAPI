@@ -18,6 +18,9 @@ public class Pago {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    
+    @NotNull(message = "El ID del curso es obligatorio")
+    private Long id_curso;
 
     @Temporal(TemporalType.DATE)
     @NotNull(message = "La fecha de pago es obligatoria")
